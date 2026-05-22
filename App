@@ -1,0 +1,71 @@
+import { useState, useEffect } from "react";
+import { fetchTasks, createTask, updateTask, deleteTask } from "./api";
+import AddTaskForm from "./components/AddTaskForm";
+import TodoList    from "./components/TodoList";
+
+function App() {
+  //  useState — список задач, стан завантаження, помилка
+  const [tasks,   setTasks]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
+
+  //  useEffect — завантажити задачі при першому рендері ([] = once)
+  useEffect(() => {
+    fetchTasks()
+      .then(setTasks)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ── Додати ──────────────────────────────────────────────────────
+  async function handleAdd(title) {
+    const newTask = await createTask(title);
+    setTasks((prev) => [...prev, newTask]);
+  }
+
+  // ── Оновити ────────────────────────────────────────────────────
+  async function handleUpdate(id, title) {
+    const updated = await updateTask(id, title);
+    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+  }
+
+  // ── Видалити ───────────────────────────────────────────────────
+  async function handleDelete(id) {
+    await deleteTask(id);
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  // ── Render ─────────────────────────────────────────────────────
+  return (
+    <div className="app">
+      <header className="app__header">
+        <p className="app__label">Express.js + React · fetch · CORS</p>
+        <h1 className="app__title">Todo<span>.</span></h1>
+        <p className="app__meta">
+          {loading
+            ? "Завантаження..."
+            : error
+            ? `Помилка: ${error}`
+            : `${tasks.length} ${tasks.length === 1 ? "задача" : "задач"}`}
+        </p>
+      </header>
+
+      <AddTaskForm onAdd={handleAdd} disabled={loading || !!error} />
+
+      <main>
+        {loading && <p className="todo-empty">Запит до API...</p>}
+        {error   && <p className="todo-empty todo-empty--error">Не вдалось зʼєднатись з API.<br/>Запусти бекенд: <code>npm run dev</code></p>}
+        {!loading && !error && (
+          <TodoList tasks={tasks} onDelete={handleDelete} onUpdate={handleUpdate} />
+        )}
+      </main>
+
+      <footer className="app__footer">
+        <span>useState · useEffect · fetch</span>
+        <span className="app__footer-badge">Fullstack</span>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
