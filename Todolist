@@ -1,0 +1,31 @@
+import TodoItem from "./TodoItem";
+
+/**
+ * TodoList — рендерить список задач.
+ *
+ * Props:
+ *   tasks    Task[]
+ *   onDelete (id) => Promise<void>
+ *   onUpdate (id, title) => Promise<void>
+ */
+function TodoList({ tasks, onDelete, onUpdate }) {
+  if (!tasks.length) {
+    return <p className="todo-empty">Список порожній — додайте першу задачу ↑</p>;
+  }
+
+  return (
+    <ul className="todo-list" role="list">
+      {tasks.map((task, index) => (
+        <TodoItem
+          key={task.id}
+          task={task}
+          index={index}
+          onDelete={onDelete}
+          onUpdate={onUpdate}
+        />
+      ))}
+    </ul>
+  );
+}
+
+export default TodoList;
