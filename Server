@@ -1,0 +1,72 @@
+const express = require("express");
+const cors = require("cors");
+ 
+const app = express();
+const PORT = process.env.PORT || 3000;
+ 
+// CORS — дозволяємо запити з Vite dev server
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+ 
+app.use(express.json());
+ 
+// In-memory storage
+let tasks = [
+  { id: 1, title: "Налаштувати CORS на бекенді" },
+  { id: 2, title: "Підключити useEffect на фронтенді" },
+  { id: 3, title: "Зробити fetch до API" },
+];
+let nextId = 4;
+ 
+const findTask = (id) => tasks.find((t) => t.id === parseInt(id));
+const notFound = (id, res) => res.status(404).json({ success: false, message: `Task ${id} not found.` });
+const badTitle = (res) => res.status(400).json({ success: false, message: "Field 'title' must be a non-empty string." });
+const validTitle = (title) => title && typeof title === "string" && title.trim();
+ 
+// GET /tasks
+app.get("/tasks", (_req, res) => {
+  res.json({ success: true, count: tasks.length, data: tasks });
+});
+ 
+// POST /tasks
+app.post("/tasks", (req, res) => {
+  if (!validTitle(req.body.title)) return badTitle(res);
+  const task = { id: nextId++, title: req.body.title.trim() };
+  tasks.push(task);
+  res.status(201).json({ success: true, data: task });
+});
+ 
+// GET /tasks/:id
+app.get("/tasks/:id", (req, res) => {
+  const task = findTask(req.params.id);
+  if (!task) return notFound(req.params.id, res);
+  res.json({ success: true, data: task });
+});
+ 
+// PATCH /tasks/:id
+app.patch("/tasks/:id", (req, res) => {
+  const task = findTask(req.params.id);
+  if (!task) return notFound(req.params.id, res);
+  if (!validTitle(req.body.title)) return badTitle(res);
+  task.title = req.body.title.trim();
+  res.json({ success: true, data: task });
+});
+ 
+// DELETE /tasks/:id
+app.delete("/tasks/:id", (req, res) => {
+  const index = tasks.findIndex((t) => t.id === parseInt(req.params.id));
+  if (index === -1) return notFound(req.params.id, res);
+  const [removed] = tasks.splice(index, 1);
+  res.json({ success: true, message: "Deleted.", data: removed });
+});
+ 
+app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found." }));
+ 
+app.listen(PORT, () => {
+  console.log(`API running → http://localhost:${PORT}`);
+});
