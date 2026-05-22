@@ -1,0 +1,44 @@
+import { useState } from "react";
+
+function AddTaskForm({ onAdd, disabled }) {
+  const [value, setValue] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e?.preventDefault();
+    const trimmed = value.trim();
+    if (!trimmed || loading) return;
+    setLoading(true);
+    try {
+      await onAdd(trimmed);
+      setValue("");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="add-form">
+      <input
+        className="add-form__input"
+        type="text"
+        placeholder="Нова задача..."
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        disabled={disabled || loading}
+        maxLength={120}
+        autoFocus
+      />
+      <button
+        className="add-form__btn"
+        onClick={handleSubmit}
+        disabled={!value.trim() || loading || disabled}
+      >
+        {loading ? "..." : "+ Додати"}
+      </button>
+    </div>
+  );
+}
+
+export default AddTaskForm;
